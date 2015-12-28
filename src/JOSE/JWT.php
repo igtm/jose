@@ -25,9 +25,9 @@ class JOSE_JWT {
         return $this->toString();
     }
 
-    function sign($private_key_or_secret, $algorithm = 'HS256') {
+    function sign($private_key_or_secret, $algorithm = 'HS256', $password = null) {
         $jws = $this->toJWS();
-        $jws->sign($private_key_or_secret, $algorithm);
+        $jws->sign($private_key_or_secret, $algorithm, $password);
         return $jws;
     }
 
@@ -73,7 +73,7 @@ class JOSE_JWT {
 
     protected function compact($segment) {
         if (is_object($segment)) {
-            $stringified = str_replace("\/", "/", json_encode($segment));
+            $stringified = str_replace("\\/", "/", json_encode($segment));
         } else {
             $stringified = $segment;
         }

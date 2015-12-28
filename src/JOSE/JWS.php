@@ -29,9 +29,9 @@ class JOSE_JWS extends JOSE_JWT {
         return json_encode($components);
     }
 
-    function sign($private_key_or_secret, $algorithm = 'HS256') {
+    function sign($private_key_or_secret, $algorithm = 'HS256', $password = null) {
         $this->header['alg'] = $algorithm;
-        $this->signature = $this->_sign($private_key_or_secret);
+        $this->signature = $this->_sign($private_key_or_secret, $password);
         if (!$this->signature) {
             throw new JOSE_Exception('Signing failed because of unknown reason');
         }
@@ -46,13 +46,14 @@ class JOSE_JWS extends JOSE_JWT {
         }
     }
 
-    private function rsa($public_or_private_key, $padding_mode) {
+    private function rsa($public_or_private_key, $padding_mode, $password = null) {
         if ($public_or_private_key instanceof JOSE_JWK) {
             $rsa = $public_or_private_key->toKey();
         } else if ($public_or_private_key instanceof RSA) {
             $rsa = $public_or_private_key;
         } else {
             $rsa = new RSA();
+            if($password) $rsa->setPassword($password);
             $rsa->loadKey($public_or_private_key);
         }
         $rsa->setHash($this->digest());
@@ -84,7 +85,7 @@ class JOSE_JWS extends JOSE_JWT {
         }
     }
 
-    private function _sign($private_key_or_secret) {
+    private function _sign($private_key_or_secret, $password = null) {
         $signature_base_string = implode('.', array(
             $this->compact((object) $this->header),
             $this->compact((object) $this->claims)
@@ -97,7 +98,7 @@ class JOSE_JWS extends JOSE_JWT {
             case 'RS256':
             case 'RS384':
             case 'RS512':
-                return $this->rsa($private_key_or_secret, RSA::SIGNATURE_PKCS1)->sign($signature_base_string);
+                return $this->rsa($private_key_or_secret, RSA::SIGNATURE_PKCS1, $password)->sign($signature_base_string);
             case 'ES256':
             case 'ES384':
             case 'ES512':
